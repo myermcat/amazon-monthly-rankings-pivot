@@ -38,18 +38,18 @@ project/
   - [ ] Add test coverage files
 
 ### 1.2 Core Classes Design
-- [ ] **Create `PivotTableManager` class**
+- [x] **Create `PivotTableManager` class**
   - [ ] Initialize with existing table or create new
   - [ ] Track current structure (categories, months, keywords)
   - [ ] Methods: `get_structure()`, `get_categories()`, `get_months()`
 
-- [ ] **Create `DataDetector` class**
+- [x] **Create `DataDetector` class**
   - [ ] Scan `DATA/` folder for countries
   - [ ] Detect categories within each country
   - [ ] Parse monthly file naming conventions
   - [ ] Methods: `detect_countries()`, `detect_categories()`, `detect_months()`
 
-- [ ] **Create `TableState` class**
+- [x] **Create `TableState` class**
   - [ ] Store current table metadata
   - [ ] Track column types (category vs month)
   - [ ] Methods: `add_category()`, `add_month()`, `get_schema()`
