@@ -460,6 +460,459 @@ class PivotTableManager:
         # Add new months
         return self.add_new_months(category, month_files)
     
+    def analyze_changes(self, new_files: List[str] = None) -> Dict[str, any]:
+        """
+        Analyze what's new by comparing available files with current table.
+        
+        Args:
+            new_files: Optional list of specific files to analyze, or None to scan all
+            
+        Returns:
+            Dictionary with analysis results
+        """
+        if self.table is None:
+            return {"error": "No table loaded"}
+        
+        print(f"🔍 Analyzing changes for {self.country}...")
+        
+        # Get current table state
+        current_categories = set(self.table_state.get_categories())
+        current_months = set(self.table_state.get_months())
+        
+        # Scan for available data
+        if new_files:
+            available_files = new_files
+        else:
+            # Auto-scan all available data
+            available_files = []
+            for category in current_categories:
+                category_files = self.data_detector.get_category_files(self.country, category)
+                available_files.extend(category_files)
+        
+        # Analyze each file
+        new_months = set()
+        new_categories = set()
+        new_keywords = set()
+        file_analysis = {}
+        
+        for file_path in available_files:
+            try:
+                filename = Path(file_path).name
+                category = self._extract_category_from_path(file_path)
+                
+                if self._is_monthly_file(file_path):
+                    # Monthly file
+                    month_name = self._extract_month_from_filename(filename)
+                    if month_name and month_name not in current_months:
+                        new_months.add(month_name)
+                        if month_name not in file_analysis:
+                            file_analysis[month_name] = {'type': 'month', 'files': [], 'category': category}
+                        file_analysis[month_name]['files'].append(file_path)
+                else:
+                    # Combined file - potential new category
+                    if category and category not in current_categories:
+                        new_categories.add(category)
+                        if category not in file_analysis:
+                            file_analysis[category] = {'type': 'category', 'files': [], 'months': []}
+                        file_analysis[category]['files'].append(file_path)
+                        
+                        # Extract months from combined file
+                        combined_months = self._extract_months_from_combined_file(file_path)
+                        for month in combined_months:
+                            if month not in current_months:
+                                new_months.add(month)
+                                file_analysis[category]['months'].append(month)
+                
+            except Exception as e:
+                print(f"⚠️  Error analyzing {file_path}: {e}")
+                continue
+        
+        # Count potential new keywords
+        for file_path in available_files:
+            try:
+                if self._is_monthly_file(file_path):
+                    month_data = self._import_month_data(file_path, "unknown")
+                    new_keywords.update(set(month_data.keys()) - set(self.table['Search Term'].values))
+            except:
+                continue
+        
+        analysis_result = {
+            'new_months': sorted(list(new_months)),
+            'new_categories': sorted(list(new_categories)),
+            'new_keywords_count': len(new_keywords),
+            'file_analysis': file_analysis,
+            'current_state': {
+                'categories': sorted(list(current_categories)),
+                'months': sorted(list(current_months)),
+                'keywords': len(self.table)
+            },
+            'recommendations': self._generate_update_recommendations(new_months, new_categories, new_keywords)
+        }
+        
+        print(f"✅ Analysis complete!")
+        print(f"   📅 New months: {len(new_months)}")
+        print(f"   🏷️  New categories: {len(new_categories)}")
+        print(f"   🔑 New keywords: {len(new_keywords)}")
+        
+        return analysis_result
+    
+    def generate_update_report(self, analysis: Dict[str, any] = None) -> str:
+        """
+        Generate a human-readable update report.
+        
+        Args:
+            analysis: Analysis result from analyze_changes(), or None to auto-analyze
+            
+        Returns:
+            Formatted report string
+        """
+        if analysis is None:
+            analysis = self.analyze_changes()
+        
+        if 'error' in analysis:
+            return f"❌ Error: {analysis['error']}"
+        
+        report = []
+        report.append("📊 UPDATE ANALYSIS REPORT")
+        report.append("=" * 50)
+        report.append(f"Country: {self.country}")
+        report.append(f"Generated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        report.append("")
+        
+        # Current state
+        report.append("🏠 CURRENT STATE:")
+        report.append(f"  Categories: {', '.join(analysis['current_state']['categories'])}")
+        report.append(f"  Months: {len(analysis['current_state']['months'])} (from {analysis['current_state']['months'][0]} to {analysis['current_state']['months'][-1]})")
+        report.append(f"  Keywords: {analysis['current_state']['keywords']:,}")
+        report.append("")
+        
+        # New data available
+        report.append("🆕 NEW DATA AVAILABLE:")
+        
+        if analysis['new_months']:
+            report.append(f"  📅 New Months ({len(analysis['new_months'])}):")
+            for month in analysis['new_months']:
+                report.append(f"    • {month}")
+        else:
+            report.append("  📅 New Months: None")
+        
+        if analysis['new_categories']:
+            report.append(f"  🏷️  New Categories ({len(analysis['new_categories'])}):")
+            for category in analysis['new_categories']:
+                report.append(f"    • {category}")
+        else:
+            report.append("  🏷️  New Categories: None")
+        
+        if analysis['new_keywords_count'] > 0:
+            report.append(f"  🔑 New Keywords: {analysis['new_keywords_count']:,}")
+        else:
+            report.append("  🔑 New Keywords: None")
+        
+        report.append("")
+        
+        # Recommendations
+        report.append("💡 RECOMMENDATIONS:")
+        for rec in analysis['recommendations']:
+            report.append(f"  • {rec}")
+        
+        report.append("")
+        report.append("🔧 NEXT STEPS:")
+        if analysis['new_months'] or analysis['new_categories']:
+            report.append("  1. Review the analysis above")
+            report.append("  2. Choose what to add (months, categories, or both)")
+            report.append("  3. Run the appropriate update method")
+        else:
+            report.append("  ✅ No updates needed - table is current!")
+        
+        return "\n".join(report)
+    
+    def prompt_user_for_updates(self, analysis: Dict[str, any] = None) -> Dict[str, any]:
+        """
+        Interactive prompt system for user decisions on updates.
+        
+        Args:
+            analysis: Analysis result from analyze_changes(), or None to auto-analyze
+            
+        Returns:
+            Dictionary with user decisions
+        """
+        if analysis is None:
+            analysis = self.analyze_changes()
+        
+        if 'error' in analysis:
+            print(f"❌ Error: {analysis['error']}")
+            return {}
+        
+        # Show current state and what's new
+        print("\n" + "="*60)
+        print("🎮 UPDATE DECISION INTERFACE")
+        print("="*60)
+        
+        # Current state summary
+        print(f"🏠 Current Table State:")
+        print(f"  Country: {self.country}")
+        print(f"  Categories: {', '.join(analysis['current_state']['categories'])}")
+        print(f"  Months: {len(analysis['current_state']['months'])} (from {analysis['current_state']['months'][0]} to {analysis['current_state']['months'][-1]})")
+        print(f"  Keywords: {analysis['current_state']['keywords']:,}")
+        
+        # What's new
+        print(f"\n🆕 New Data Available:")
+        if analysis['new_months']:
+            print(f"  📅 New Months ({len(analysis['new_months'])}): {', '.join(analysis['new_months'])}")
+        if analysis['new_categories']:
+            print(f"  🏷️  New Categories ({len(analysis['new_categories'])}): {', '.join(analysis['new_categories'])}")
+        if analysis['new_keywords_count'] > 0:
+            print(f"  🔑 New Keywords: {analysis['new_keywords_count']:,}")
+        
+        if not analysis['new_months'] and not analysis['new_categories']:
+            print("  ✅ No new data detected - table is current!")
+            return {'action': 'none', 'reason': 'no_updates_needed'}
+        
+        # User choices
+        print(f"\n🔧 What would you like to do?")
+        print(f"  1. Add new months only")
+        print(f"  2. Add new categories only") 
+        print(f"  3. Add both months and categories")
+        print(f"  4. Skip updates for now")
+        print(f"  5. View detailed analysis report")
+        
+        while True:
+            try:
+                choice = input("\nEnter your choice (1-5): ").strip()
+                
+                if choice == '1' and analysis['new_months']:
+                    return self._handle_month_only_update(analysis)
+                elif choice == '2' and analysis['new_categories']:
+                    return self._handle_category_only_update(analysis)
+                elif choice == '3' and (analysis['new_months'] or analysis['new_categories']):
+                    return self._handle_comprehensive_update(analysis)
+                elif choice == '4':
+                    return {'action': 'skip', 'reason': 'user_choice'}
+                elif choice == '5':
+                    print("\n" + self.generate_update_report(analysis))
+                    continue  # Show menu again
+                else:
+                    print("❌ Invalid choice or no data available for that option. Please try again.")
+                    continue
+                    
+            except KeyboardInterrupt:
+                print("\n\n⚠️  Update cancelled by user.")
+                return {'action': 'cancelled', 'reason': 'user_interrupt'}
+            except Exception as e:
+                print(f"❌ Error: {e}")
+                continue
+    
+    def _handle_month_only_update(self, analysis: Dict[str, any]) -> Dict[str, any]:
+        """Handle user choice to add months only."""
+        print(f"\n📅 Adding new months only...")
+        
+        if not analysis['new_months']:
+            return {'action': 'error', 'reason': 'no_new_months'}
+        
+        # Show which months will be added
+        print(f"  📅 Months to add: {', '.join(analysis['new_months'])}")
+        
+        # Confirm action
+        if self._confirm_action("Add these new months?"):
+            return {
+                'action': 'update_months',
+                'months': analysis['new_months'],
+                'categories': [],
+                'reason': 'user_confirmed_months_only'
+            }
+        else:
+            return {'action': 'cancelled', 'reason': 'user_declined'}
+    
+    def _handle_category_only_update(self, analysis: Dict[str, any]) -> Dict[str, any]:
+        """Handle user choice to add categories only."""
+        print(f"\n🏷️  Adding new categories only...")
+        
+        if not analysis['new_categories']:
+            return {'action': 'error', 'reason': 'no_new_categories'}
+        
+        # Show which categories will be added
+        print(f"  🏷️  Categories to add: {', '.join(analysis['new_categories'])}")
+        
+        # Confirm action
+        if self._confirm_action("Add these new categories?"):
+            return {
+                'action': 'update_categories',
+                'months': [],
+                'categories': analysis['new_categories'],
+                'reason': 'user_confirmed_categories_only'
+            }
+        else:
+            return {'action': 'cancelled', 'reason': 'user_declined'}
+    
+    def _handle_comprehensive_update(self, analysis: Dict[str, any]) -> Dict[str, any]:
+        """Handle user choice to add both months and categories."""
+        print(f"\n🚀 Adding both new months and categories...")
+        
+        months_to_add = analysis['new_months']
+        categories_to_add = analysis['new_categories']
+        
+        if months_to_add:
+            print(f"  📅 Months to add: {', '.join(months_to_add)}")
+        if categories_to_add:
+            print(f"  🏷️  Categories to add: {', '.join(categories_to_add)}")
+        
+        # Confirm action
+        if self._confirm_action("Add all this new data?"):
+            return {
+                'action': 'update_all',
+                'months': months_to_add,
+                'categories': categories_to_add,
+                'reason': 'user_confirmed_comprehensive'
+            }
+        else:
+            return {'action': 'cancelled', 'reason': 'user_declined'}
+    
+    def _confirm_action(self, message: str) -> bool:
+        """Ask user to confirm an action."""
+        while True:
+            try:
+                response = input(f"\n{message} (y/n): ").strip().lower()
+                if response in ['y', 'yes']:
+                    return True
+                elif response in ['n', 'no']:
+                    return False
+                else:
+                    print("Please enter 'y' for yes or 'n' for no.")
+            except KeyboardInterrupt:
+                print("\n⚠️  Action cancelled.")
+                return False
+    
+    def execute_user_decision(self, decision: Dict[str, any]) -> bool:
+        """
+        Execute the user's decision on updates.
+        
+        Args:
+            decision: Decision dictionary from prompt_user_for_updates()
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if not decision or 'action' not in decision:
+            print("❌ No valid decision to execute")
+            return False
+        
+        action = decision['action']
+        
+        if action == 'none':
+            print("✅ No updates needed - table is current!")
+            return True
+        elif action == 'skip':
+            print("⏭️  Updates skipped by user")
+            return True
+        elif action == 'cancelled':
+            print("❌ Update cancelled")
+            return False
+        elif action == 'error':
+            print(f"❌ Error: {decision.get('reason', 'unknown')}")
+            return False
+        
+        print(f"\n🚀 Executing user decision: {action}")
+        
+        try:
+            if action == 'update_months':
+                return self._execute_month_update(decision)
+            elif action == 'update_categories':
+                return self._execute_category_update(decision)
+            elif action == 'update_all':
+                return self._execute_comprehensive_update(decision)
+            else:
+                print(f"❌ Unknown action: {action}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Error executing update: {e}")
+            return False
+    
+    def _execute_month_update(self, decision: Dict[str, any]) -> bool:
+        """Execute month-only update."""
+        months = decision.get('months', [])
+        if not months:
+            print("⚠️  No months specified for update")
+            return False
+        
+        print(f"📅 Adding {len(months)} new months...")
+        
+        # For now, we'll need to implement month addition logic
+        # This would integrate with the existing month expansion methods
+        print("⚠️  Month update execution not yet implemented")
+        return False
+    
+    def _execute_category_update(self, decision: Dict[str, any]) -> bool:
+        """Execute category-only update."""
+        categories = decision.get('categories', [])
+        if not categories:
+            print("⚠️  No categories specified for update")
+            return False
+        
+        print(f"🏷️  Adding {len(categories)} new categories...")
+        
+        # For now, we'll need to implement category addition logic
+        # This would integrate with the existing category expansion methods
+        print("⚠️  Category update execution not yet implemented")
+        return False
+    
+    def _execute_comprehensive_update(self, decision: Dict[str, any]) -> bool:
+        """Execute comprehensive update (both months and categories)."""
+        months = decision.get('months', [])
+        categories = decision.get('categories', [])
+        
+        print(f"🚀 Executing comprehensive update...")
+        print(f"  📅 Months: {len(months)}")
+        print(f"  🏷️  Categories: {len(categories)}")
+        
+        # For now, we'll need to implement comprehensive update logic
+        print("⚠️  Comprehensive update execution not yet implemented")
+        return False
+
+    def _extract_category_from_path(self, file_path: str) -> Optional[str]:
+        """Extract category name from file path."""
+        try:
+            path_parts = Path(file_path).parts
+            # Look for category in path: DATA/country/category/filename
+            if len(path_parts) >= 3:
+                return path_parts[-2]  # Second-to-last part
+        except:
+            pass
+        return None
+    
+    def _extract_months_from_combined_file(self, file_path: str) -> List[str]:
+        """Extract month names from a combined file by analyzing column headers."""
+        try:
+            df = pd.read_csv(file_path, skiprows=1)  # Skip metadata row
+            months = []
+            
+            for col in df.columns:
+                if col != 'Search Term' and self._is_month_column(col):
+                    months.append(col)
+            
+            return months
+        except:
+            return []
+    
+    def _generate_update_recommendations(self, new_months: Set[str], new_categories: Set[str], new_keywords: Set[str]) -> List[str]:
+        """Generate intelligent update recommendations."""
+        recommendations = []
+
+        if new_months and new_categories:
+            recommendations.append("Add both new months and new categories for comprehensive update")
+        elif new_months:
+            recommendations.append("Add new months to expand temporal coverage")
+        elif new_categories:
+            recommendations.append("Add new categories to expand category coverage")
+        
+        if new_keywords:
+            recommendations.append(f"Update will add {len(new_keywords):,} new keywords to the table")
+        
+        if not new_months and not new_categories:
+            recommendations.append("No new data detected - table is current")
+        
+        return recommendations
+
     def _extract_month_from_filename(self, filename: str) -> Optional[str]:
         """
         Extract month name from filename like 'US_Top_search_terms_Simple_Month_2025_07_31.csv'

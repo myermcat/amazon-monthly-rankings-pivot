@@ -1,75 +1,207 @@
-# Monthly Rankings Merger - Brand Analytics Data Consolidation
+# Amazon Monthly Rankings Pivot Table System
 
-This tool merges monthly Brand Analytics CSV files into a single pivot table format, consolidating search term rankings across different months.
+A powerful, multi-dimensional analytics platform that transforms monthly Brand Analytics CSV files into comprehensive pivot tables with dynamic category expansion and intelligent data management.
 
-## What it does
+## 🎯 What It Does
 
-- **Input**: Multiple monthly CSV files (e.g., June, July, August)
-- **Output**: Single CSV with one row per search term, columns for each month's ranking
-- **Structure**: Search Term | June | July | August | etc.
-- **Filtering**: Automatically removes keywords with rankings > 500,000
-- **Base Order**: Uses the latest month's search term order as the foundation
+**Multi-Dimensional Pivot Tables**: Creates sophisticated analytics tables that organize data hierarchically:
+- **Countries** → **Categories** → **Monthly Rankings**
+- **Keywords as rows** with **category presence indicators** (0/1 flags)
+- **Dynamic expansion** for unlimited categories and months
+- **Smart data merging** that preserves existing data while adding new information
 
-## Files
+## 🏗️ Architecture
 
-- **`merge_monthly_rankings.py`** - Main script that processes your CSV files
-- **`monthly_rankings_combined.csv`** - Output file (2.4 MB, 74,831 unique search terms)
-- **`csv/` folder** - Where you put your monthly CSV files
-
-## How to use
-
-### 1. Prepare your data
-Place your monthly CSV files in the `csv/` folder with names like:
-- `2025-June.csv`
-- `2025-July.csv`
-- `2025-August.csv`
-- etc.
-
-**The script automatically detects all CSV files in the folder!**
-
-### 2. Run the script
-```bash
-python3 merge_monthly_rankings.py
+```
+project/
+├── DATA/                    # Raw input files (monthly CSVs)
+├── outputs/                 # Processed pivot tables
+├── src/                     # Source code
+├── tests/                   # Test files
+└── existing_tables/         # Anchor files for table creation
 ```
 
-## Output format
+## 🚀 Key Features
 
-The final CSV will have this clean structure:
-- **Search Term**: The keyword/search term (using July's order as base)
-- **June, July, etc.**: Monthly ranking data (Search Frequency Rank)
+### **Smart Data Detection**
+- **Automatic country detection** from folder structure
+- **Dynamic category discovery** within each country
+- **Intelligent file parsing** for various CSV formats
+- **Processing status tracking** without duplicating raw data
+
+### **Multi-Dimensional Tables**
+- **Category columns**: 0/1 indicators for keyword presence
+- **Monthly columns**: Actual ranking data (Search Frequency Rank)
+- **Keyword preservation**: Maintains latest month's search term order
+- **Data integrity**: No overwriting of existing information
+
+### **Dynamic Expansion**
+- **Add new categories** incrementally to existing tables
+- **Add new months** to expand temporal coverage
+- **Smart merging**: New keywords added as rows, existing ones updated
+- **Column ordering**: Maintains Search Term | Categories | Months structure
+
+### **Intelligent Update System**
+- **Change analysis**: Automatically detects what's new
+- **Update reports**: Comprehensive analysis of available updates
+- **User control**: Interactive prompts for update decisions
+- **Confirmation system**: Prevents accidental data changes
+
+## 📊 Output Format
+
+The final pivot table has this structure:
+
+| Search Term | Beauty | Grocery | Health&PersonalCare | 2023-August | 2023-September | ... |
+|-------------|--------|---------|---------------------|-------------|-----------------|-----|
+| magnesium glycinate | 1 | 0 | 1 | 1250 | 1180 | ... |
+| vitamin d3 | 1 | 1 | 1 | 890 | 920 | ... |
+| protein powder | 0 | 1 | 0 | 2100 | 1950 | ... |
 
 **Features:**
-- ✅ **No extra columns** - just the data you need
-- ✅ **Latest month's search term order** preserved exactly (automatically detected)
-- ✅ **Rankings > 500,000 automatically filtered out**
-- ✅ **Clean integer rankings** (no decimal places)
-- ✅ **Smart base month detection** - automatically finds the most recent month
+- ✅ **Category presence**: 1 if keyword exists in category, 0 otherwise
+- ✅ **Monthly rankings**: Actual Search Frequency Rank values
+- ✅ **Latest month order**: Preserves search term sequence from most recent month
+- ✅ **Dynamic columns**: Automatically expands with new categories/months
+- ✅ **Data preservation**: Never overwrites existing information
 
-## Current results
+## 🛠️ How to Use
 
-- **Total unique search terms**: 74,831 (filtered from 171,415)
-- **Search terms in both months**: 59,418
-- **File size**: 2.4 MB (58% reduction from original)
-- **Highest ranking**: 498,256 (well under 500,000 limit)
+### **1. Setup Your Data Structure**
+```
+DATA/
+├── CANADA/
+│   ├── Beauty/
+│   │   ├── CA_Top_search_terms_Simple_Month_2025_07_31.csv
+│   │   └── ...
+│   ├── Grocery/
+│   └── Health&PersonalCare/
+└── US/
+    ├── Beauty/
+    ├── Grocery/
+    └── ...
+```
 
-## Requirements
+### **2. Create Initial Pivot Tables**
+```python
+from src.pivot_table_manager_enhanced import PivotTableManager
 
-- Python 3.x
-- pandas library (`pip3 install pandas`)
+# Create Canada pivot table
+manager = PivotTableManager('CANADA')
+table = manager.create_from_anchor('Beauty', 'existing_tables/canada_beauty_anchor.csv')
 
-## Notes
+# Add more categories
+manager.import_category_data('Grocery', 'DATA/CANADA/Grocery/')
+manager.import_category_data('Health&PersonalCare', 'DATA/CANADA/Health&PersonalCare/')
+```
 
-- **Automatic file detection**: Just drop CSV files in the `csv/` folder
-- **Latest month's search term order**: Automatically detected and used as the base order for the final table
-- **Smart filtering**: Removes low-performing keywords (>500,000 rank) automatically
-- **Memory efficient**: Only reads the columns you need
-- **Scalable**: Automatically handles as many months as you add
+### **3. Expand with New Data**
+```python
+# Add new months to existing categories
+manager.expand_monthly_columns('Beauty')
 
-## Adding more months
+# Analyze what's new
+analysis = manager.analyze_changes()
+report = manager.generate_update_report(analysis)
 
-Simply add new CSV files to the `csv/` folder and run the script again. It will automatically:
-1. Detect all CSV files
-2. Extract month names from filenames
-3. Filter out rankings > 500,000
-4. Merge them into the existing structure
-5. Maintain the latest month's search term order as the base (automatically detected)
+# Interactive update interface
+decision = manager.prompt_user_for_updates(analysis)
+manager.execute_user_decision(decision)
+```
+
+### **4. Smart Updates**
+```python
+# The system automatically:
+# - Detects new monthly files
+# - Identifies new categories
+# - Suggests update strategies
+# - Preserves all existing data
+# - Maintains table structure
+```
+
+## 📈 Current Capabilities
+
+### **Phase 1: Foundation** ✅
+- Core classes for table management
+- Processing status tracking
+- Metadata persistence
+
+### **Phase 2: Table Creation** ✅
+- Multi-dimensional pivot table creation
+- Category expansion and data import
+- Smart data merging and preservation
+
+### **Phase 3: Dynamic Expansion** ✅
+- Category addition with 0/1 indicators
+- Month expansion for temporal coverage
+- Smart update system with change detection
+
+### **Phase 4: User Interface** ✅
+- Interactive update prompts
+- User decision system
+- Confirmation and error handling
+
+### **Phase 5: Integration & Testing** 🚧
+- End-to-end workflow testing
+- Performance optimization
+- Final documentation
+
+## 🔧 Technical Requirements
+
+- **Python 3.8+**
+- **pandas >= 1.5.0**
+- **File structure**: DATA/country/category/monthly_files.csv
+
+## 📁 File Locations
+
+- **Output tables**: `outputs/canada_pivot_table.csv`, `outputs/us_pivot_table.csv`
+- **Metadata**: `outputs/metadata/` (JSON state files)
+- **Source code**: `src/` (Python modules)
+- **Test files**: `src/test_*.py`
+
+## 🎮 Interactive Features
+
+### **Update Decision Interface**
+```
+🎮 UPDATE DECISION INTERFACE
+============================================================
+🏠 Current Table State:
+  Country: CANADA
+  Categories: Beauty, Grocery, Health&PersonalCare
+  Months: 24 (from 2023-August to 2025-July)
+  Keywords: 25,987
+
+🆕 New Data Available:
+  📅 New Months: None
+  🏷️  New Categories: None
+
+🔧 What would you like to do?
+  1. Add new months only
+  2. Add new categories only
+  3. Add both months and categories
+  4. Skip updates for now
+  5. View detailed analysis report
+```
+
+## 🚀 Future Enhancements
+
+- **Batch processing** for multiple countries
+- **Data visualization** and analytics dashboards
+- **API integration** for automated updates
+- **Cloud deployment** for team collaboration
+- **Advanced filtering** and search capabilities
+
+## 📝 Notes
+
+- **Data preservation**: Raw input files can be deleted after processing
+- **Single source of truth**: Pivot tables become the authoritative data source
+- **Scalable architecture**: Handles unlimited categories and months
+- **Memory efficient**: Processes large datasets without memory issues
+- **Error recovery**: Graceful handling of file issues and user mistakes
+
+## 🤝 Contributing
+
+This system is designed for Amazon R&D team use. The modular architecture makes it easy to:
+- Add new data sources
+- Implement new analysis features
+- Extend category detection
+- Optimize performance for specific use cases

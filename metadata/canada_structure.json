@@ -1,35 +1,35 @@
 {
   "country": "CANADA",
   "categories": [
+    "Grocery",
     "Health&PersonalCare",
-    "Beauty",
-    "Grocery"
+    "Beauty"
   ],
   "months": [
-    "2024-April",
-    "2024-August",
-    "2025-May",
-    "2025-January",
-    "2023-September",
     "2025-February",
-    "2023-November",
-    "2023-October",
+    "2024-September",
     "2023-December",
-    "2024-January",
-    "2024-June",
+    "2023-September",
+    "2025-June",
+    "2024-August",
     "2024-February",
-    "2024-July",
+    "2024-December",
+    "2024-November",
     "2025-April",
-    "2024-March",
+    "2024-April",
+    "2024-January",
     "2023-August",
+    "2024-July",
+    "2025-January",
+    "2024-June",
     "2024-May",
+    "2025-May",
     "2025-March",
     "2025-July",
-    "2025-June",
-    "2024-November",
-    "2024-December",
+    "2023-November",
+    "2023-October",
     "2024-October",
-    "2024-September"
+    "2024-March"
   ],
   "keywords": [],
   "column_types": {
@@ -84,5 +84,5 @@
       "total_keywords": 0
     }
   },
-  "last_updated": "2025-08-24T22:20:07.880384"
+  "last_updated": "2025-08-24T22:28:21.151022"
 }
