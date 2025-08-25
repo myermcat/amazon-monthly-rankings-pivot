@@ -284,6 +284,27 @@ class DataDetector:
             'unparsed_files': len(files) - len(date_files)
         }
     
+    def get_category_files(self, country: str, category: str) -> List[str]:
+        """
+        Get all file paths for a specific category.
+        
+        Args:
+            country: Country name
+            category: Category name
+            
+        Returns:
+            List of full file paths for the category
+        """
+        if country not in self.monthly_files or category not in self.monthly_files[country]:
+            return []
+        
+        category_path = self.data_root / country / category
+        if not category_path.exists():
+            return []
+        
+        # Return full paths to all files in the category
+        return [str(category_path / filename) for filename in self.monthly_files[country][category]]
+
     def scan_all_data(self) -> Dict[str, any]:
         """
         Perform complete scan of all data.

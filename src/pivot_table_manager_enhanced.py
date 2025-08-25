@@ -272,11 +272,14 @@ class PivotTableManager:
         )
         
         # Save updated table
+        
+        # Reorder columns: Search Term, Categories, then Months
+        self._reorder_columns()
         self.save_table()
         
         print(f"🎉 Successfully added category {category}!")
         print(f"   📁 Files processed: {len(processed_files)}")
-        print(f"   �� New keywords added: {total_keywords_added}")
+        print(f"   🔑 New keywords added: {total_keywords_added}")
         print(f"   📊 Table dimensions: {self.table.shape}")
         
         return self.table
@@ -291,17 +294,36 @@ class PivotTableManager:
     def load_table(self) -> pd.DataFrame:
         """Load existing table from CSV file."""
         if self.table_path.exists():
+            print(f"📂 Loading existing table from {self.table_path}...")
             self.table = pd.read_csv(self.table_path)
             
-            # Update table state from loaded table (sync categories and months)
-            for col in self.table.columns:
-                if col != 'Search Term':
-                    if col in self.table_state.get_categories():
-                        self.table_state.add_category(col)
-                    else:
-                        self.table_state.add_month(col)
+            # Initialize TableState from the loaded table's columns
+            self.table_state = TableState(country=self.country)
             
-            print(f"📂 Loaded existing table with {len(self.table)} keywords")
+            # Infer categories and months from columns
+            # Assuming category columns are non-date-like strings and month columns are date-like
+            category_cols = []
+            month_cols = []
+            for col in self.table.columns:
+                if col == "Search Term":  # Skip the index column
+                    continue
+                # Heuristic: if a column name can be parsed as a month, it's a month column
+                # Otherwise, it's a category column (or other metadata)
+                if self._is_month_column(col):
+                    month_cols.append(col)
+                else:
+                    category_cols.append(col)
+            
+            for cat in category_cols:
+                self.table_state.add_category(cat)
+            for month in month_cols:
+                self.table_state.add_month(month)
+
+            print(f"📊 Loaded existing table with {len(self.table)} keywords.")
+            print(f"🏷️ Categories in table state: {self.table_state.get_categories()}")
+            print(f"📅 Months in table state: {self.table_state.get_months()}")
+            self.table_state._save_state()
+            
             return self.table
         else:
             print("📂 No existing table found")
@@ -325,3 +347,219 @@ class PivotTableManager:
     def get_processing_summary(self) -> Dict[str, any]:
         """Get processing status summary."""
         return self.table_state.get_processing_summary()
+
+    def add_new_months(self, category: str, month_files: List[str]) -> pd.DataFrame:
+        """
+        Add new months to an existing category in the pivot table.
+        
+        Args:
+            category: Category to expand with new months
+            month_files: List of file paths for new month data
+            
+        Returns:
+            Updated DataFrame
+        """
+        if self.table is None:
+            raise ValueError("No table loaded. Create or load a table first.")
+        
+        if category not in self.table_state.get_categories():
+            raise ValueError(f"Category '{category}' not found in table. Add category first.")
+        
+        print(f"📅 Expanding category '{category}' with new months...")
+        
+        new_months_added = 0
+        processed_files = []
+        
+        for file_path in month_files:
+            try:
+                # Extract month from filename
+                filename = Path(file_path).name
+                month_match = self._extract_month_from_filename(filename)
+                
+                if not month_match:
+                    print(f"⚠️  Could not extract month from filename: {filename}")
+                    continue
+                
+                month_name = month_match
+                
+                # Check if month already exists
+                if month_name in self.table_state.get_months():
+                    print(f"⏭️  Month {month_name} already exists, skipping")
+                    continue
+                
+                print(f"  ➕ Adding month: {month_name}")
+                
+                # Import month data
+                month_data = self._import_month_data(file_path, category)
+                
+                # Add new month column
+                self.table[month_name] = 0  # Initialize with 0s
+                
+                # Populate data for existing keywords
+                for search_term, rank in month_data.items():
+                    if search_term in self.table['Search Term'].values:
+                        # Find the row index
+                        row_idx = self.table[self.table['Search Term'] == search_term].index[0]
+                        self.table.loc[row_idx, month_name] = rank
+                
+                # Add month to table state
+                self.table_state.add_month(month_name)
+                new_months_added += 1
+                processed_files.append(file_path)
+                
+                print(f"    ✅ Added {month_name} with {len(month_data)} data points")
+                
+            except Exception as e:
+                print(f"❌ Error processing {file_path}: {e}")
+                continue
+        
+        if new_months_added > 0:
+            # Reorder columns and save
+            self._reorder_columns()
+            self.save_table()
+            
+            print(f"🎉 Successfully added {new_months_added} new months to category '{category}'!")
+            print(f"   📁 Files processed: {len(processed_files)}")
+            print(f"   📊 Table dimensions: {self.table.shape}")
+        else:
+            print("ℹ️  No new months were added")
+        
+        return self.table
+    
+    def expand_monthly_columns(self, category: str) -> pd.DataFrame:
+        """
+        Automatically detect and add new months for a category from available files.
+        
+        Args:
+            category: Category to expand with new months
+            
+        Returns:
+            Updated DataFrame
+        """
+        if self.table is None:
+            raise ValueError("No table loaded. Create or load a table first.")
+        
+        print(f"🔍 Auto-expanding monthly columns for category '{category}'...")
+        
+        # Get available month files for this category
+        available_files = self.data_detector.get_category_files(self.country, category)
+        
+        if not available_files:
+            print(f"⚠️  No files found for category '{category}'")
+            return self.table
+        
+        # Filter for month files (not combined files)
+        month_files = [f for f in available_files if self._is_monthly_file(f)]
+        
+        if not month_files:
+            print(f"⚠️  No monthly files found for category '{category}'")
+            return self.table
+        
+        print(f"📁 Found {len(month_files)} monthly files")
+        
+        # Add new months
+        return self.add_new_months(category, month_files)
+    
+    def _extract_month_from_filename(self, filename: str) -> Optional[str]:
+        """
+        Extract month name from filename like 'US_Top_search_terms_Simple_Month_2025_07_31.csv'
+        Returns format like '2025-July'
+        """
+        try:
+            # Pattern: US_Top_search_terms_Simple_Month_YYYY_MM_DD.csv
+            parts = filename.split('_')
+            if len(parts) >= 6:
+                year = parts[5]
+                month_num = int(parts[6])
+                
+                month_names = [
+                    'January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'
+                ]
+                
+                month_name = month_names[month_num - 1]
+                return f"{year}-{month_name}"
+        except (ValueError, IndexError):
+            pass
+        
+        return None
+    
+    def _is_monthly_file(self, file_path: str) -> bool:
+        """Check if file is a monthly data file (not a combined file)."""
+        filename = Path(file_path).name
+        # Monthly files have the pattern: YYYY_MM_DD
+        return '_202' in filename and filename.count('_') >= 6
+    
+    def _is_month_column(self, col_name: str) -> bool:
+        """Heuristic to determine if a column name represents a month."""
+        # Check for YYYY-Month format
+        if '-' in col_name:
+            parts = col_name.split('-')
+            if len(parts) == 2 and parts[0].isdigit():
+                year = int(parts[0])
+                month_name = parts[1]
+                month_order = ["January", "February", "March", "April", "May", "June", 
+                              "July", "August", "September", "October", "November", "December"]
+                return month_name in month_order
+        return False
+    
+    def _import_month_data(self, file_path: str, category: str) -> Dict[str, int]:
+        """
+        Import monthly data from a CSV file.
+        Returns dict mapping search terms to rankings.
+        """
+        try:
+            # Read CSV starting from row 2 (skip metadata row, use row 1 as headers)
+            df = pd.read_csv(file_path, skiprows=1)
+            
+            # Find required columns
+            search_term_col = None
+            rank_col = None
+            
+            for col in df.columns:
+                if "Search Term" in col:
+                    search_term_col = col
+                if "Search Frequency Rank" in col:
+                    rank_col = col
+            
+            if not search_term_col or not rank_col:
+                raise ValueError(f"Required columns not found in {file_path}")
+            
+            # Create mapping
+            data = {}
+            for _, row in df.iterrows():
+                search_term = row[search_term_col]
+                rank = row[rank_col]
+                
+                # Convert rank to int, handle NaN
+                if pd.notna(rank):
+                    try:
+                        data[search_term] = int(rank)
+                    except (ValueError, TypeError):
+                        continue
+            
+            return data
+            
+        except Exception as e:
+            print(f"❌ Error importing month data from {file_path}: {e}")
+            return {}
+
+    def _reorder_columns(self):
+        """Reorder columns to: Search Term, Categories, then Months."""
+        if self.table is None:
+            return
+
+        # Get column lists
+        search_term_col = 'Search Term'
+        category_cols = [col for col in self.table.columns if col in self.table_state.get_categories()]
+        month_cols = [col for col in self.table.columns if '-' in col]
+
+        # Sort months chronologically
+        month_order = ['January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December']
+        month_cols.sort(key=lambda x: (int(x.split('-')[0]), month_order.index(x.split('-')[1])))
+
+        # Create new column order
+        new_order = [search_term_col] + category_cols + month_cols
+        self.table = self.table[new_order]
+        print(f'✅ Columns reordered: {len(category_cols)} categories, {len(month_cols)} months')

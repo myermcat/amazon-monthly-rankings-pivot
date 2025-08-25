@@ -97,11 +97,11 @@ project/
 
 ### 3.2 Month Expansion
 - [ ] **Implement month addition**
-  - [ ] Detect new months in existing categories
-  - [ ] Add new month columns
-  - [ ] Populate data from available sources
-  - [ ] Fill missing data with 0s
-  - [ ] Methods: `add_new_months()`, `expand_monthly_columns()`
+  - [x] Detect new months in existing categories
+  - [x] Add new month columns
+  - [x] Populate data from available sources
+  - [x] Fill missing data with 0s
+  - [x] Methods: `add_new_months()`, `expand_monthly_columns()`
 
 ### 3.3 Incremental Updates
 - [ ] **Implement smart update system**
