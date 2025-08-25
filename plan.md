@@ -10,19 +10,30 @@ Output: pivot_table.csv with columns:
 kw | Beauty | Health | Grocery | 2023-Aug | 2023-Sep | 2024-Jan | ...
 ```
 
+## 📁 Project Structure
+```
+project/
+├── DATA/                    # Raw input files (monthly CSVs)
+├── outputs/                 # Processed pivot tables
+├── src/                     # Source code
+├── tests/                   # Test files
+└── existing_tables/         # Your current combined files as anchors
+```
+
 ---
 
 ## 📝 Phase 1: Foundation & Structure Setup
 
 ### 1.1 Environment Setup
-- [ ] **Create new project structure**
-  - [ ] Create `src/` folder for source code
-  - [ ] Create `tests/` folder for test files
-  - [ ] Create `data/` folder for processed data
-  - [ ] Move existing script to `src/`
+- [x] **Create new project structure**
+  - [x] Create `src/` folder for source code
+  - [x] Create `outputs/` folder for processed pivot tables
+  - [x] Create `existing_tables/` folder for current combined files as anchors
+  - [x] Create `tests/` folder for test files
+  - [x] Move existing script to `src/`
 
 - [ ] **Update .gitignore**
-  - [ ] Exclude `data/` folder (processed outputs)
+  - [ ] Exclude `outputs/` folder (processed outputs)
   - [ ] Keep `DATA/` folder (raw inputs)
   - [ ] Add test coverage files
 
@@ -49,7 +60,7 @@ kw | Beauty | Health | Grocery | 2023-Aug | 2023-Sep | 2024-Jan | ...
 
 ### 2.1 Table Creation & Management
 - [ ] **Implement base table creation**
-  - [ ] Start with one category as anchor
+  - [ ] Start with one category as anchor (existing Beauty files)
   - [ ] Create category presence column (0/1)
   - [ ] Import all monthly data from anchor category
   - [ ] Set search terms as index, preserve order
@@ -74,7 +85,7 @@ kw | Beauty | Health | Grocery | 2023-Aug | 2023-Sep | 2024-Jan | ...
 
 ---
 
-## �� Phase 3: Dynamic Expansion System
+## 🚀 Phase 3: Dynamic Expansion System
 
 ### 3.1 Category Expansion
 - [ ] **Implement category addition**
@@ -144,7 +155,7 @@ kw | Beauty | Health | Grocery | 2023-Aug | 2023-Sep | 2024-Jan | ...
 
 ---
 
-## �� Phase 6: Migration & Cleanup
+## 📊 Phase 6: Migration & Cleanup
 
 ### 6.1 Data Migration
 - [ ] **Migrate existing data**
@@ -196,13 +207,13 @@ kw | Beauty | Health | Grocery | 2023-Aug | 2023-Sep | 2024-Jan | ...
 ---
 
 ## 🔍 Next Steps
-1. Review and approve this plan
-2. Start with Phase 1.1 (Environment Setup)
-3. Create basic class structure
-4. Implement core functionality incrementally
-5. Test each phase before moving to the next
+1. ✅ **Environment setup complete** - Project structure created
+2. **Start with Phase 1.2** (Core Classes Design)
+3. **Create basic class structure**
+4. **Implement core functionality incrementally**
+5. **Test each phase before moving to the next**
 
 ---
 
 *Last Updated: August 24, 2025*
-*Status: Planning Phase*
+*Status: Environment Setup Complete - Ready for Development*
