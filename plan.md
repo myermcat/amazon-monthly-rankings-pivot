@@ -72,16 +72,16 @@ project/
 
 ### 2.2 Data Import & Processing
 - [ ] **Implement category data import**
-  - [ ] Parse CSV files with proper headers
-  - [ ] Extract search terms and rankings
-  - [ ] Handle missing data (fill with 0s)
-  - [ ] Methods: `import_category()`, `process_monthly_data()`
+  - [x] Parse CSV files with proper headers
+  - [x] Extract search terms and rankings
+  - [x] Handle missing data (fill with 0s)
+  - [x] Methods: `import_category()`, `process_monthly_data()`
 
 - [ ] **Implement data merging logic**
-  - [ ] Merge new keywords (add rows)
-  - [ ] Update existing keywords (preserve data)
-  - [ ] Handle category presence updates
-  - [ ] Methods: `merge_category()`, `add_keywords()`, `update_presence()`
+  - [x] Merge new keywords (add rows)
+  - [x] Update existing keywords (preserve data)
+  - [x] Handle category presence updates
+  - [x] Methods: `merge_category()`, `add_keywords()`, `update_presence()`
 
 ---
 
