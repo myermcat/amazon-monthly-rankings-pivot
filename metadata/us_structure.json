@@ -1,19 +1,92 @@
 {
   "country": "US",
   "categories": [
-    "Beauty"
+    "US_Grocery",
+    "US-Health&PersonalCare",
+    "US-Beauty"
   ],
-  "months": [
-    "2025-July"
-  ],
-  "keywords": [
-    "keyword1",
-    "keyword2",
-    "keyword3"
-  ],
+  "months": [],
+  "keywords": [],
   "column_types": {
-    "Beauty": "category",
-    "2025-July": "month"
+    "US-Health&PersonalCare": "category",
+    "US_Grocery": "category",
+    "US-Beauty": "category"
   },
-  "last_updated": "2025-08-24T20:31:12.239208"
+  "processing_status": {
+    "US-Health&PersonalCare": {
+      "status": "pending",
+      "files_processed": [],
+      "files_available": [
+        "US_Top_search_terms_Simple_Month_2025_01_31.csv",
+        "US_Top_search_terms_Simple_Month_2023_11_30.csv",
+        "US_Top_search_terms_Simple_Month_2024_07_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_02_29.csv",
+        "US_Top_search_terms_Simple_Month_2024_09_30.csv",
+        "US_Top_search_terms_Simple_Month_2024_05_31.csv",
+        "US_Top_search_terms_Simple_Month_2025_03_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_01_31.csv",
+        "US_Top_search_terms_Simple_Month_2023_09_30.csv",
+        "US_Top_search_terms_Simple_Month_2025_02_28.csv",
+        "US_Top_search_terms_Simple_Month_2025_07_31.csv",
+        "US_Top_search_terms_Simple_Month_2025_05_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_03_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_11_30.csv",
+        "US_Top_search_terms_Simple_Month_2023_10_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_06_30.csv",
+        "US_Top_search_terms_Simple_Month_2023_12_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_08_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_04_30.csv",
+        "US_Top_search_terms_Simple_Month_2025_06_30.csv",
+        "US_Top_search_terms_Simple_Month_2024_12_31.csv",
+        "US_Top_search_terms_Simple_Month_2023_08_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_10_31.csv",
+        "US_Top_search_terms_Simple_Month_2025_04_30.csv"
+      ],
+      "last_processed": null,
+      "total_keywords": 0,
+      "last_updated": "2025-08-24T20:58:59.591080"
+    },
+    "US_Grocery": {
+      "status": "pending",
+      "files_processed": [],
+      "files_available": [
+        "US_Top_search_terms_Simple_Month_2025_01_31.csv",
+        "US_Top_search_terms_Simple_Month_2023_11_30.csv",
+        "US_Top_search_terms_Simple_Month_2024_07_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_02_29.csv",
+        "US_Top_search_terms_Simple_Month_2024_09_30.csv",
+        "US_Top_search_terms_Simple_Month_2024_05_31.csv",
+        "US_Top_search_terms_Simple_Month_2025_03_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_01_31.csv",
+        "US_Top_search_terms_Simple_Month_2023_09_30.csv",
+        "US_Top_search_terms_Simple_Month_2025_02_28.csv",
+        "US_Top_search_terms_Simple_Month_2025_07_31.csv",
+        "US_Top_search_terms_Simple_Month_2025_05_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_03_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_11_30.csv",
+        "US_Top_search_terms_Simple_Month_2023_10_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_06_30.csv",
+        "US_Top_search_terms_Simple_Month_2023_12_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_08_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_04_30.csv",
+        "US_Top_search_terms_Simple_Month_2025_06_30.csv",
+        "US_Top_search_terms_Simple_Month_2024_12_31.csv",
+        "US_Top_search_terms_Simple_Month_2023_08_31.csv",
+        "US_Top_search_terms_Simple_Month_2024_10_31.csv",
+        "US_Top_search_terms_Simple_Month_2025_04_30.csv"
+      ],
+      "last_processed": null,
+      "total_keywords": 0,
+      "last_updated": "2025-08-24T20:58:59.591461"
+    },
+    "US-Beauty": {
+      "status": "pending",
+      "files_processed": [],
+      "files_available": [],
+      "last_processed": null,
+      "total_keywords": 0,
+      "last_updated": "2025-08-24T20:58:59.591677"
+    }
+  },
+  "last_updated": "2025-08-24T20:58:59.591685"
 }
