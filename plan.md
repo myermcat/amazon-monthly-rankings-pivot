@@ -89,10 +89,10 @@ project/
 
 ### 3.1 Category Expansion
 - [ ] **Implement category addition**
-  - [ ] Create new 0/1 column for new category
-  - [ ] Import all monthly data from new category
-  - [ ] Merge with existing table structure
-  - [ ] Update category presence indicators
+  - [x] Create new 0/1 column for new category
+  - [x] Import all monthly data from new category
+  - [x] Merge with existing table structure
+  - [x] Update category presence indicators
   - [ ] Methods: `add_new_category()`, `expand_table_columns()`
 
 ### 3.2 Month Expansion
