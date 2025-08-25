@@ -1,0 +1,19 @@
+{
+  "country": "US",
+  "categories": [
+    "Beauty"
+  ],
+  "months": [
+    "2025-July"
+  ],
+  "keywords": [
+    "keyword1",
+    "keyword2",
+    "keyword3"
+  ],
+  "column_types": {
+    "Beauty": "category",
+    "2025-July": "month"
+  },
+  "last_updated": "2025-08-24T20:31:12.239208"
+}
